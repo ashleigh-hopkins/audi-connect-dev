@@ -110,10 +110,6 @@ python audi_cli.py list-vehicles
 python audi_cli.py status YOUR_VIN
 ```
 
-#### Get vehicle status in JSON format
-```bash
-python audi_cli.py status YOUR_VIN --json
-```
 
 ### Vehicle Control Commands
 
@@ -193,7 +189,20 @@ python audi_cli.py --debug status YOUR_VIN
 
 #### Raw API response
 ```bash
+# Show raw API data alongside formatted output
 python audi_cli.py status YOUR_VIN --raw
+```
+
+#### JSON output for programmatic use
+```bash
+# Get pure JSON output for scripts/automation
+python audi_cli.py status YOUR_VIN --json
+
+# Works with list-vehicles too
+python audi_cli.py list-vehicles --json
+
+# Example: Parse with jq
+python audi_cli.py status YOUR_VIN --json | jq '.battery_level'
 ```
 
 

@@ -156,47 +156,95 @@ class AudiCLI:
         print(f"Model Year: {vehicle.model_year}")
         print(f"CSID: {vehicle.csid}")
 
-    async def list_vehicles(self, raw: bool = False):
+    async def list_vehicles(self, raw: bool = False, json_output: bool = False):
         """List all vehicles associated with the account."""
-        print("Fetching vehicle list...")
+        if not json_output:
+            print("Fetching vehicle list...")
         await self.account.update(vinlist=None)
 
         if not self.account._vehicles:
-            print("No vehicles found.")
+            if json_output:
+                print(json.dumps({"vehicles": [], "error": "No vehicles found"}))
+            else:
+                print("No vehicles found.")
             return
 
-        for i, vehicle in enumerate(self.account._vehicles):
-            print(f"\n--- Vehicle {i + 1} ---")
+        if json_output:
+            # Return pure JSON for programmatic use
+            vehicles_data = []
+            for vehicle in self.account._vehicles:
+                vehicle_data = {
+                    "vin": vehicle.vin,
+                    "title": vehicle.title,
+                    "model": vehicle.model,
+                    "model_year": vehicle.model_year,
+                    "csid": vehicle.csid,
+                    "fields": vehicle._vehicle.fields,
+                    "state": vehicle._vehicle.state,
+                }
+                vehicles_data.append(vehicle_data)
+            print(json.dumps({"vehicles": vehicles_data}, indent=2, default=str))
+        else:
+            for i, vehicle in enumerate(self.account._vehicles):
+                print(f"\n--- Vehicle {i + 1} ---")
+                self.print_vehicle_summary(vehicle)
+
+                if raw:
+                    # Print raw vehicle data
+                    raw_data = {
+                        "fields": vehicle._vehicle.fields,
+                        "state": vehicle._vehicle.state,
+                    }
+                    self.print_json(raw_data, f"Raw Data for {vehicle.vin}")
+
+    async def get_vehicle_status(self, vin: str, raw: bool = False, json_output: bool = False):
+        """Get comprehensive vehicle status."""
+        if not json_output:
+            print(f"Fetching status for VIN: {vin}")
+        await self.account.update(vinlist=[vin.lower()])
+
+        vehicle = self._find_vehicle_silent(vin) if json_output else self._find_vehicle(vin)
+        if not vehicle:
+            if json_output:
+                print(json.dumps({"error": f"Vehicle with VIN {vin} not found"}))
+            return
+
+        if json_output:
+            # Return pure JSON for programmatic use
+            status_data = {
+                "vin": vehicle.vin,
+                "title": vehicle.title,
+                "model": vehicle.model,
+                "model_year": vehicle.model_year,
+                "csid": vehicle.csid,
+                "last_update": str(vehicle.last_update_time) if vehicle.last_update_time_supported else None,
+                "mileage": vehicle.mileage if vehicle.mileage_supported else None,
+                "range": vehicle.range if vehicle.range_supported else None,
+                "electric_range": vehicle.hybrid_range if vehicle.hybrid_range_supported else None,
+                "battery_level": vehicle.state_of_charge if vehicle.state_of_charge_supported else None,
+                "target_charge": vehicle.target_state_of_charge if vehicle.target_state_of_charge_supported else None,
+                "charging_state": vehicle.charging_state if vehicle.charging_state_supported else None,
+                "plug_connected": vehicle.plug_state if vehicle.plug_state_supported else None,
+                "climate_state": vehicle.climatisation_state if vehicle.climatisation_state_supported else None,
+                "doors_locked": vehicle.doors_trunk_status == "Locked" if vehicle.doors_trunk_status_supported else None,
+                "windows_closed": not vehicle.any_window_open if vehicle.any_window_open_supported else None,
+                "position": vehicle.position if vehicle.position_supported else None,
+                "fields": vehicle._vehicle.fields,
+                "state": vehicle._vehicle.state,
+            }
+            print(json.dumps(status_data, indent=2, default=str))
+        else:
             self.print_vehicle_summary(vehicle)
 
+            # Print organized status information
+            self._print_vehicle_status(vehicle)
+
             if raw:
-                # Print raw vehicle data
                 raw_data = {
                     "fields": vehicle._vehicle.fields,
                     "state": vehicle._vehicle.state,
                 }
-                self.print_json(raw_data, f"Raw Data for {vehicle.vin}")
-
-    async def get_vehicle_status(self, vin: str, raw: bool = False):
-        """Get comprehensive vehicle status."""
-        print(f"Fetching status for VIN: {vin}")
-        await self.account.update(vinlist=[vin.lower()])
-
-        vehicle = self._find_vehicle(vin)
-        if not vehicle:
-            return
-
-        self.print_vehicle_summary(vehicle)
-
-        # Print organized status information
-        self._print_vehicle_status(vehicle)
-
-        if raw:
-            raw_data = {
-                "fields": vehicle._vehicle.fields,
-                "state": vehicle._vehicle.state,
-            }
-            self.print_json(raw_data, "Raw Vehicle Data")
+                self.print_json(raw_data, "Raw Vehicle Data")
 
     def _find_vehicle(self, vin: str):
         """Find vehicle by VIN."""
@@ -209,6 +257,12 @@ class AudiCLI:
             for v in self.account._vehicles:
                 print(f"  - {v.vin}")
         return vehicle
+    
+    def _find_vehicle_silent(self, vin: str):
+        """Find vehicle by VIN without printing errors."""
+        return next(
+            (v for v in self.account._vehicles if v.vin == vin.lower()), None
+        )
 
     def _print_vehicle_status(self, vehicle):
         """Print organized vehicle status information."""
@@ -624,11 +678,13 @@ Examples:
     # List vehicles
     list_parser = subparsers.add_parser("list-vehicles", help="List all vehicles")
     list_parser.add_argument("--raw", action="store_true", help="Show raw API data")
+    list_parser.add_argument("--json", action="store_true", help="Output as JSON for programmatic use")
 
     # Vehicle status
     status_parser = subparsers.add_parser("status", help="Get vehicle status")
     status_parser.add_argument("vin", help="Vehicle VIN")
     status_parser.add_argument("--raw", action="store_true", help="Show raw API data")
+    status_parser.add_argument("--json", action="store_true", help="Output as JSON for programmatic use")
 
     # Lock/Unlock
     lock_parser = subparsers.add_parser("lock", help="Lock vehicle (requires S-PIN)")
@@ -777,10 +833,12 @@ async def main():
         ) as cli:
             # Route commands
             if args.command == "list-vehicles":
-                await cli.list_vehicles(raw=args.raw)
+                json_output = getattr(args, 'json', False)
+                await cli.list_vehicles(raw=args.raw, json_output=json_output)
 
             elif args.command == "status":
-                await cli.get_vehicle_status(args.vin, raw=args.raw)
+                json_output = getattr(args, 'json', False)
+                await cli.get_vehicle_status(args.vin, raw=args.raw, json_output=json_output)
 
             elif args.command == "lock":
                 await cli.lock_vehicle(args.vin)
