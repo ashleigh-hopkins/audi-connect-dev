@@ -1,0 +1,47 @@
+# IMPORTANT: Never commit secrets!
+config.json
+*.json
+!config_example.json
+!package.json
+!package-lock.json
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+.venv
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# Logs
+*.log
+logs/
+
+# Testing
+.coverage
+.pytest_cache/
+htmlcov/
+
+# Credentials and secrets
+.env
+.env.local
+credentials.txt
+secrets.yaml
+*.key
+*.pem
+*.crt
+
+# Temporary files
+*.tmp
+*.bak
+*~

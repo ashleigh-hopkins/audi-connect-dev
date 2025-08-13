@@ -1,0 +1,14 @@
+{
+  "username": "your.email@example.com",
+  "password": "your_password",
+  "country": "DE",
+  "spin": "1234",
+  "api_level": 0,
+  "vehicles": [
+    {
+      "vin": "WVWZZZ1KZAW123456",
+      "name": "My Audi e-tron",
+      "notes": "Main family vehicle"
+    }
+  ]
+}
