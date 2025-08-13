@@ -219,50 +219,147 @@ class AudiCLI:
         if vehicle.last_update_time_supported:
             print(f"Last Update: {vehicle.last_update_time}")
         if vehicle.mileage_supported:
-            print(f"Mileage: {vehicle.mileage} km")
+            print(f"Mileage: {vehicle.mileage:,} km")
         if vehicle.range_supported:
-            print(f"Range: {vehicle.range} km")
+            print(f"Total Range: {vehicle.range} km")
+        if vehicle.hybrid_range_supported:
+            print(f"Electric Range: {vehicle.hybrid_range} km")
+        if vehicle.primary_engine_range_supported and vehicle.secondary_engine_range_supported:
+            print(f"Primary Engine Range: {vehicle.primary_engine_range} km")
+            print(f"Secondary Engine Range: {vehicle.secondary_engine_range} km")
 
         # Position
         if vehicle.position_supported:
             pos = vehicle.position
+            print(f"\n--- Location ---")
             print(f"Position: Lat {pos['latitude']:.6f}, Lon {pos['longitude']:.6f}")
-            if pos.get("timestamp"):
-                print(f"Position Time: {pos['timestamp']}")
+            if pos.get("parktime"):
+                print(f"Parked Since: {pos['parktime']}")
 
-        # Fuel/Energy
+        # Electric Vehicle Info
+        if vehicle.car_type_supported and vehicle.car_type in ["electric", "hybrid"]:
+            print("\n--- Electric Vehicle ---")
+            if vehicle.state_of_charge_supported:
+                print(f"Battery Level: {vehicle.state_of_charge}%")
+            if vehicle.target_state_of_charge_supported:
+                print(f"Target Charge: {vehicle.target_state_of_charge}%")
+            if vehicle.plug_state_supported:
+                plug_connected = vehicle.plug_state
+                print(f"Plug Connected: {'Yes' if plug_connected else 'No'}")
+            if vehicle.plug_lock_state_supported:
+                plug_locked = vehicle.plug_lock_state
+                print(f"Plug Unlocked: {'Yes' if plug_locked else 'No'}")
+            if vehicle.plug_led_color_supported:
+                print(f"Plug LED Color: {vehicle.plug_led_color}")
+            if vehicle.external_power_supported:
+                print(f"External Power: {vehicle.external_power}")
+            if vehicle.charging_state_supported:
+                print(f"Charging State: {vehicle.charging_state}")
+            if vehicle.charging_mode_supported:
+                print(f"Charging Mode: {vehicle.charging_mode}")
+            if vehicle.charging_power_supported and vehicle.charging_power > 0:
+                print(f"Charging Power: {vehicle.charging_power:.1f} kW")
+            if vehicle.actual_charge_rate_supported and vehicle.actual_charge_rate > 0:
+                print(f"Charge Rate: {vehicle.actual_charge_rate} {vehicle.actual_charge_rate_unit}")
+            if vehicle.remaining_charging_time_supported and vehicle.remaining_charging_time > 0:
+                print(f"Time to Full: {vehicle.remaining_charging_time} min")
+                if vehicle.charging_complete_time:
+                    print(f"Charge Complete: {vehicle.charging_complete_time}")
+        
+        # Fuel Vehicle Info
         if vehicle.tank_level_supported:
+            print("\n--- Fuel ---")
             print(f"Fuel Level: {vehicle.tank_level}%")
-        if vehicle.state_of_charge_supported:
-            print(f"Battery Charge: {vehicle.state_of_charge}%")
-
-        # Charging
-        if vehicle.charging_state_supported:
-            print(f"Charging State: {vehicle.charging_state}")
-        if vehicle.remaining_charging_time_supported:
-            print(f"Remaining Charge Time: {vehicle.remaining_charging_time} min")
 
         # Climate
+        print("\n--- Climate ---")
         if vehicle.climatisation_state_supported:
-            print(f"Climate State: {vehicle.climatisation_state}")
+            print(f"Climate Control: {vehicle.climatisation_state}")
+        if vehicle.remaining_climatisation_time_supported and vehicle.remaining_climatisation_time > 0:
+            print(f"Climate Time Remaining: {vehicle.remaining_climatisation_time} min")
         if vehicle.outdoor_temperature_supported:
             print(f"Outdoor Temperature: {vehicle.outdoor_temperature}°C")
+        if vehicle.glass_surface_heating_supported:
+            print(f"Glass Heating: {'Active' if vehicle.glass_surface_heating else 'Inactive'}")
+        if vehicle.preheater_active_supported:
+            print(f"Pre-heater: {'Active' if vehicle.preheater_active else 'Inactive'}")
+            if vehicle.preheater_active and vehicle.preheater_remaining_supported:
+                print(f"Pre-heater Time Remaining: {vehicle.preheater_remaining} min")
 
         # Security
-        print("\n--- Security Status ---")
+        print("\n--- Security & Access ---")
         if vehicle.doors_trunk_status_supported:
             print(f"Doors/Trunk: {vehicle.doors_trunk_status}")
+            # Detailed door status
+            if vehicle.any_door_open:
+                doors_open = []
+                if vehicle.left_front_door_open_supported and vehicle.left_front_door_open:
+                    doors_open.append("Front Left")
+                if vehicle.right_front_door_open_supported and vehicle.right_front_door_open:
+                    doors_open.append("Front Right")
+                if vehicle.left_rear_door_open_supported and vehicle.left_rear_door_open:
+                    doors_open.append("Rear Left")
+                if vehicle.right_rear_door_open_supported and vehicle.right_rear_door_open:
+                    doors_open.append("Rear Right")
+                if doors_open:
+                    print(f"  Open Doors: {', '.join(doors_open)}")
+            if vehicle.trunk_open_supported and vehicle.trunk_open:
+                print(f"  Trunk: Open")
+            if vehicle.hood_open_supported and vehicle.hood_open:
+                print(f"  Hood: Open")
+        
         if vehicle.any_window_open_supported:
-            print(f"Windows Open: {vehicle.any_window_open}")
+            print(f"Windows: {'Open' if vehicle.any_window_open else 'Closed'}")
+            if vehicle.any_window_open:
+                windows_open = []
+                if vehicle.left_front_window_open_supported and vehicle.left_front_window_open:
+                    windows_open.append("Front Left")
+                if vehicle.right_front_window_open_supported and vehicle.right_front_window_open:
+                    windows_open.append("Front Right")
+                if vehicle.left_rear_window_open_supported and vehicle.left_rear_window_open:
+                    windows_open.append("Rear Left")
+                if vehicle.right_rear_window_open_supported and vehicle.right_rear_window_open:
+                    windows_open.append("Rear Right")
+                if vehicle.sun_roof_supported and vehicle.sun_roof:
+                    windows_open.append("Sunroof")
+                if windows_open:
+                    print(f"  Open Windows: {', '.join(windows_open)}")
+        
+        if vehicle.parking_light_supported:
+            print(f"Parking Lights: {'On' if vehicle.parking_light else 'Off'}")
 
         # Maintenance
-        print("\n--- Maintenance ---")
+        maintenance_items = []
         if vehicle.service_inspection_time_supported:
-            print(f"Service Due: {vehicle.service_inspection_time} days")
+            maintenance_items.append(f"Service in {vehicle.service_inspection_time} days")
         if vehicle.service_inspection_distance_supported:
-            print(f"Service Due: {vehicle.service_inspection_distance} km")
+            maintenance_items.append(f"Service in {vehicle.service_inspection_distance:,} km")
+        if vehicle.oil_change_time_supported:
+            maintenance_items.append(f"Oil change in {vehicle.oil_change_time} days")
+        if vehicle.oil_change_distance_supported:
+            maintenance_items.append(f"Oil change in {vehicle.oil_change_distance:,} km")
+        if vehicle.service_adblue_distance_supported:
+            maintenance_items.append(f"AdBlue range: {vehicle.service_adblue_distance:,} km")
+        
+        if maintenance_items:
+            print("\n--- Maintenance ---")
+            for item in maintenance_items:
+                print(f"  {item}")
+        
         if vehicle.oil_level_supported:
-            print(f"Oil Level: {vehicle.oil_level}%")
+            print(f"Oil Level: {vehicle.oil_level:.1f}%")
+        elif vehicle.oil_level_binary_supported:
+            print(f"Oil Level: {'OK' if not vehicle.oil_level_binary else 'Low'}")
+        
+        # Engine Type
+        if vehicle.primary_engine_type_supported or vehicle.secondary_engine_type_supported:
+            print("\n--- Drivetrain ---")
+            if vehicle.primary_engine_type_supported:
+                print(f"Primary Engine: {vehicle.primary_engine_type}")
+            if vehicle.secondary_engine_type_supported:
+                print(f"Secondary Engine: {vehicle.secondary_engine_type}")
+            if vehicle.car_type_supported:
+                print(f"Vehicle Type: {vehicle.car_type.capitalize()}")
 
     async def lock_vehicle(self, vin: str):
         """Lock the vehicle."""
