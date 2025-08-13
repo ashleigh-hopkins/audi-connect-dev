@@ -363,19 +363,6 @@ class AudiCLI:
             print("Failed to set target charge")
         return result
 
-    async def set_charging_mode(self, vin: str, mode: str):
-        """Set the vehicle charging mode without starting charging."""
-        if mode not in ["manual", "timer"]:
-            print("ERROR: Mode must be 'manual' or 'timer'")
-            return False
-
-        print(f"Setting charging mode to '{mode}' for {vin}...")
-        result = await self.account.set_charging_mode(vin, mode)
-        if result:
-            print(f"Charging mode set to '{mode}' successfully")
-        else:
-            print("Failed to set charging mode")
-        return result
 
     async def start_preheater(self, vin: str, duration: int = 30):
         """Start pre-heater."""
@@ -467,6 +454,7 @@ class AudiCLI:
             print("\n=== Long Term Reset Trip ===")
             trip = vehicle.longterm_reset
             self._print_trip_data(trip)
+    
 
     def _print_trip_data(self, trip):
         """Print trip data information."""
@@ -606,13 +594,6 @@ Examples:
         "target", type=int, help="Target charge percentage (20-100)"
     )
 
-    charge_mode_parser = subparsers.add_parser(
-        "set-charging-mode", help="Set charging mode"
-    )
-    charge_mode_parser.add_argument("vin", help="Vehicle VIN")
-    charge_mode_parser.add_argument(
-        "mode", choices=["manual", "timer"], help="Charging mode: manual or timer"
-    )
 
     # Pre-heater
     preheater_start_parser = subparsers.add_parser(
@@ -648,6 +629,7 @@ Examples:
     # Trip data
     trip_parser = subparsers.add_parser("trip-data", help="Get trip data")
     trip_parser.add_argument("vin", help="Vehicle VIN")
+    
 
     return parser
 
@@ -733,8 +715,6 @@ async def main():
             elif args.command == "set-charge-target":
                 await cli.set_charge_target(args.vin, args.target)
 
-            elif args.command == "set-charging-mode":
-                await cli.set_charging_mode(args.vin, args.mode)
 
             elif args.command == "preheater-start":
                 await cli.start_preheater(args.vin, args.duration)

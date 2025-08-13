@@ -45,3 +45,6 @@ secrets.yaml
 *.tmp
 *.bak
 *~
+
+# External repositories
+audi_connect_ha/

@@ -125,43 +125,63 @@ python audi_cli.py unlock YOUR_VIN
 
 #### Climate control
 ```bash
-# Start climate control
-python audi_cli.py start-climate YOUR_VIN
+# Start climate control with default temperature (21°C)
+python audi_cli.py climate-start YOUR_VIN
+
+# Start with specific temperature and options
+python audi_cli.py climate-start YOUR_VIN --temp 22 --glass-heating
+
+# Start with seat heating
+python audi_cli.py climate-start YOUR_VIN --seat-fl --seat-fr
 
 # Stop climate control
-python audi_cli.py stop-climate YOUR_VIN
-
-# Start with specific temperature
-python audi_cli.py start-climate YOUR_VIN --temp 22
+python audi_cli.py climate-stop YOUR_VIN
 ```
 
-#### Auxiliary heating (if equipped)
+#### Pre-heater/Auxiliary heating (if equipped)
 ```bash
-# Start auxiliary heating for 30 minutes
-python audi_cli.py start-preheater YOUR_VIN --duration 30
+# Start pre-heater for 30 minutes (default)
+python audi_cli.py preheater-start YOUR_VIN
 
-# Stop auxiliary heating
-python audi_cli.py stop-preheater YOUR_VIN
+# Start pre-heater for specific duration
+python audi_cli.py preheater-start YOUR_VIN --duration 45
+
+# Stop pre-heater
+python audi_cli.py preheater-stop YOUR_VIN
 ```
 
 #### Window heating
 ```bash
-python audi_cli.py start-window-heating YOUR_VIN
-python audi_cli.py stop-window-heating YOUR_VIN
+python audi_cli.py window-heating-start YOUR_VIN
+python audi_cli.py window-heating-stop YOUR_VIN
 ```
 
 ### Electric Vehicle Commands
 
 #### Charging control
 ```bash
-# Start charging
-python audi_cli.py start-charging YOUR_VIN
+# Start manual charging
+python audi_cli.py charge-start YOUR_VIN
 
-# Stop charging
-python audi_cli.py stop-charging YOUR_VIN
+# Start timer-based charging
+python audi_cli.py charge-start YOUR_VIN --timer
 
-# Set charge limit
-python audi_cli.py set-charge-limit YOUR_VIN --limit 80
+# Set target charge level (20-100%)
+python audi_cli.py set-charge-target YOUR_VIN 80
+```
+
+### Data Commands
+
+#### Refresh vehicle data
+```bash
+# Request fresh data from the vehicle
+python audi_cli.py refresh-data YOUR_VIN
+```
+
+#### Get trip data
+```bash
+# View trip statistics and consumption data
+python audi_cli.py trip-data YOUR_VIN
 ```
 
 ### Advanced Usage
@@ -176,10 +196,6 @@ python audi_cli.py --debug status YOUR_VIN
 python audi_cli.py status YOUR_VIN --raw
 ```
 
-#### Specific operations
-```bash
-python audi_cli.py execute YOUR_VIN honkAndFlash
-```
 
 ## Examples
 
